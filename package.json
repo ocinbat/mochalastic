@@ -1,0 +1,37 @@
+{
+  "name": "mochalastic",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=6.9.1"
+  },
+  "description": "mocha elasticsearch reporter.",
+  "main": "./lib/mochalastic.js",
+  "scripts": {
+    "build": "babel src -d lib",
+    "test": "mocha --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ocinbat/mochalastic.git"
+  },
+  "keywords": [
+    "mocha",
+    "elasticsearch",
+    "reporter"
+  ],
+  "author": "Ömer Cinbat <ocinbat@outlook.com> (https://github.com/ocinbat)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ocinbat/mochalastic/issues"
+  },
+  "homepage": "https://github.com/ocinbat/mochalastic#readme",
+  "dependencies": {
+    "elasticsearch": "^13.3.1",
+    "mocha": "^3.5.3"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
+    "chai": "^4.1.2"
+  }
+}
