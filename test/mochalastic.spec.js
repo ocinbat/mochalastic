@@ -32,7 +32,19 @@ describe('mochalastic reporter', function () {
         }
       };
       
-      Mochalastic.call({}, runner);
+      var options = {
+        reporterOptions: {
+          host: 'localhost',
+          port: 9200,
+          protocol: 'http',
+          username: 'elastic',
+          password: 'changeme',
+          project: 'OrderApi',
+          suite: 'some test suite key'
+        }
+      };
+
+      Mochalastic.call({}, runner, options);
     });
   });
 });
