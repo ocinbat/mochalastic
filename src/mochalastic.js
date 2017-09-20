@@ -1,3 +1,5 @@
+'use strict';
+
 var mocha = require('mocha');
 var elasticsearch = require('elasticsearch');
 
