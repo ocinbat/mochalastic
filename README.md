@@ -50,6 +50,14 @@ All tests will be published. There is a feature request for skipping 'Pending' o
 
 **suiteId**: *string* suite name with which the tests are associated
 
+## Contributing
+
+In lieu of a formal style guide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
 ## References
 - http://mochajs.org/#mochaopts
 - https://github.com/mochajs/mocha/wiki/Third-party-reporters
