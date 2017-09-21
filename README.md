@@ -1,5 +1,8 @@
 # mochalastic - elasticsearch reporter for mocha
 
+[![Build Status](https://travis-ci.org/ocinbat/mochalastic.svg?branch=master)](https://travis-ci.org/ocinbat/mochalastic)
+[![Coverage Status](https://coveralls.io/repos/github/ocinbat/mochalastic/badge.svg?branch=master)](https://coveralls.io/github/ocinbat/mochalastic?branch=master)
+
 Pushes test results into an elasticsearch instance.
 
 ## Installation
