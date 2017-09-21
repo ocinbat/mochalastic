@@ -8,7 +8,8 @@
   "main": "./lib/mochalastic.js",
   "scripts": {
     "build": "babel src -d lib",
-    "test": "npm run build && mocha --reporter spec"
+    "test": "npm run build && mocha --reporter spec",
+    "cover": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec test/*"
   },
   "repository": {
     "type": "git",
@@ -32,6 +33,8 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.6.0",
-    "chai": "^4.1.2"
+    "chai": "^4.1.2",
+    "coveralls": "^2.13.1",
+    "istanbul": "^0.4.5"
   }
 }
