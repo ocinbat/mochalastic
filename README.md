@@ -1,4 +1,4 @@
-#mochalastic - elasticsearch reporter for mocha
+# mochalastic - elasticsearch reporter for mocha
 
 Pushes test results into an elasticsearch instance.
 
