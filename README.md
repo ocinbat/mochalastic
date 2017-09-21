@@ -11,7 +11,7 @@ $ npm install mochalastic --save-dev
 ## Usage
 Ensure that your elasticsearch installation is up and running.
 
-Run mocha with `mochalastic`:
+Run mocha with `mochalastic`: 
 
 ```shell
 $ mocha test --reporter mochalastic --reporter-options host=localhost,username=elastic,password=changeme,port=9200,project=some_project,suite=some_suite
