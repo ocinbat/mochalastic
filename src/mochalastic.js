@@ -8,6 +8,7 @@ module.exports = mochalastic;
 function mochalastic(runner, options) {
   mocha.reporters.Base.call(this, runner);
   var reporterOptions = options.reporterOptions;
+  var currentDate = (new Date()).toISOString();
 
   validate(reporterOptions, 'host');
   validate(reporterOptions, 'port');
@@ -84,6 +85,7 @@ function mochalastic(runner, options) {
       currentRetry: test.currentRetry(),
       project: reporterOptions.project,
       suite: reporterOptions.suite,
+      time: currentDate,
       err: errorJSON(test.err || {})
     };
   }
