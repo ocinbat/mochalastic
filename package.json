@@ -1,6 +1,6 @@
 {
   "name": "mochalastic",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "engines": {
     "node": ">=6.9.1"
   },
@@ -8,7 +8,7 @@
   "main": "./lib/mochalastic.js",
   "scripts": {
     "build": "babel src -d lib",
-    "test": "npm run build && mocha --reporter spec",
+    "test": "npm run build && mocha --reporter spec --no-exit",
     "cover": "istanbul cover node_modules/mocha/bin/_mocha -- -R spec test/*"
   },
   "repository": {
