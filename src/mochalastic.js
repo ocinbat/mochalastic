@@ -1,62 +1,48 @@
 'use strict';
 
 var mocha = require('mocha');
-var elasticsearch = require('elasticsearch');
+const {  Client} = require('@elastic/elasticsearch');
+var dateFormat = require('date-format');
 
 module.exports = mochalastic;
 
-function mochalastic(runner, options) {
+async function mochalastic(runner, options) {
   mocha.reporters.Base.call(this, runner);
   var reporterOptions = options.reporterOptions;
   var currentDate = (new Date()).toISOString();
-
-  validate(reporterOptions, 'host');
-  validate(reporterOptions, 'port');
-  validate(reporterOptions, 'protocol');
+  
+  validate(reporterOptions, 'nodeUris');
+  validate(reporterOptions, 'username');
+  validate(reporterOptions, 'password');
+  validate(reporterOptions, 'indexPrefix');
   validate(reporterOptions, 'project');
   validate(reporterOptions, 'suite');
 
-  var self = this;
-  var tests = [];
+  var testResults = [];
 
-  var elasticConfig = {
-    host: [
-      {
-        host: reporterOptions.host,
-        protocol: reporterOptions.protocol,
-        port: reporterOptions.port
-      }
-    ],
-    log: 'error'
-  };
+  const client = new Client({
+    node: reporterOptions.nodeUris,
+    auth: {
+      username: reporterOptions.username,
+      password: reporterOptions.password
+    }
+  })
+  
 
-  if (reporterOptions.username && reporterOptions.password) {
-    elasticConfig.host[0].auth = reporterOptions.username + ':' + reporterOptions.password;
-  }
-
-  var client = new elasticsearch.Client(elasticConfig);
-
-  var log = function (testData) {
-    client.create({
-      index: 'test-data-index', // Get from config
-      type: 'mocha-test-result',
-      id: testData.id,
-      timestamp: testData.time,
-      body: testData
-    }, function (error, response) {
-      if (error) {
-        console.log(error);
-      }
-    });
+  async function logResultsToIndex(testResult) {
+    await client.index({
+      index: reporterOptions.indexPrefix + '-' +  dateFormat('yyyy.MM.dd', new Date()),
+      body: testResult
+    }).catch(console.log)
   };
 
   runner.on('test end', function (test) {
-    tests.push(test);
+    testResults.push(test);
   });
 
   runner.on('end', function () {
-    tests.map(clean).forEach(function (test) {
-      log(test);
+    testResults.map(clean).forEach(async function (test) {
+      await logResultsToIndex(test).catch(console.log);
     }, this);
   });
 
@@ -128,7 +114,7 @@ function mochalastic(runner, options) {
     if (options == null) {
       throw new Error("Missing --reporter-options in mocha.opts");
     }
-    
+
     if (options[name] == null) {
       throw new Error(`Missing ${name} value. Please update --reporter-options in mocha.opts`);
     }

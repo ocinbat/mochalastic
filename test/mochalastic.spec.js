@@ -1,6 +1,6 @@
 'use strict';
 
-var Chai  = require('chai');
+var Chai = require('chai');
 var Mochalastic = require('./../lib/mochalastic.js');
 var Should = Chai.should();
 
@@ -23,6 +23,7 @@ describe('mochalastic reporter', function () {
         slow: function () {},
         currentRetry: function () {}
       };
+      
       runner.on = function (event, callback) {
         if (event === 'test end') {
           callback(test);
@@ -31,16 +32,15 @@ describe('mochalastic reporter', function () {
           callback();
         }
       };
-      
+
       var options = {
         reporterOptions: {
-          host: 'localhost',
-          port: 9200,
-          protocol: 'http',
-          username: 'elastic',
-          password: 'changeme',
-          project: 'OrderApi',
-          suite: 'some test suite key'
+          nodeUris: 'https://lcoalhost:9243',
+          username: 'username',
+          password: 'password',
+          project: 'SampleTest',
+          suite: 'some test suite key',
+          indexPrefix: 'test-results'
         }
       };
 
