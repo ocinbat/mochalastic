@@ -17,7 +17,7 @@ Ensure that your elasticsearch installation is up and running.
 Run mocha with `mochalastic`: 
 
 ```shell
-$ mocha test --reporter mochalastic --reporter-options host=localhost,username=elastic,password=changeme,port=9200,project=some_project,suite=some_suite
+$ mocha test --reporter mochalastic --reporter-options nodeUris=https://localhost:9200,username=elastic,password=changeme,project=some_project,suite=some_suite, indexPrefix=test-results
 ```
 
 or use a mocha.options file
@@ -25,7 +25,7 @@ or use a mocha.options file
 mocha --opts mochalastic.opts build/test
 --recursive
 --reporter mochalastic
---reporter-options host=localhost,username=elastic,password=changeme,port=9200,project=some_project,suite=some_suite
+--reporter-options nodeUris=https://localhost:9200,username=elastic,password=changeme,project=some_project,suite=some_suite, indexPrefix=test-results
 --no-exit
 ```
 
