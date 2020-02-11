@@ -20,7 +20,10 @@
     "elasticsearch",
     "reporter"
   ],
-  "author": "Ömer Cinbat <ocinbat@outlook.com> (https://github.com/ocinbat), Mustafa Demirer <m.demirer@outlook.com>(https://github.com/demirermustafa)",
+  "author": "Ömer Cinbat <ocinbat@outlook.com> (https://github.com/ocinbat)",
+  "contributors": [
+    "Mustafa Demirer <m.demirer@outlook.com>(https://github.com/demirermustafa)"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ocinbat/mochalastic/issues"

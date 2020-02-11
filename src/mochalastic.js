@@ -1,12 +1,27 @@
 'use strict';
 
 var mocha = require('mocha');
-const {  Client} = require('@elastic/elasticsearch');
+const {Client} = require('@elastic/elasticsearch');
 var dateFormat = require('date-format');
+ 
+const {
+  EVENT_RUN_BEGIN,
+  EVENT_TEST_PENDING,
+  EVENT_RUN_END,
+  EVENT_TEST_FAIL,
+  EVENT_TEST_PASS,
+  EVENT_SUITE_BEGIN,
+  EVENT_SUITE_END,
+  EVENT_TEST_END
+} = mocha.Runner.constants;
 
 module.exports = mochalastic;
 
 async function mochalastic(runner, options) {
+
+  console.log(EVENT_TEST_END);
+  console.log(EVENT_RUN_BEGIN);
+
   mocha.reporters.Base.call(this, runner);
   var reporterOptions = options.reporterOptions;
   var currentDate = (new Date()).toISOString();
@@ -36,11 +51,11 @@ async function mochalastic(runner, options) {
     }).catch(console.log)
   };
 
-  runner.on('test end', function (test) {
+  runner.on(EVENT_TEST_END, function (test) {
     testResults.push(test);
   });
 
-  runner.on('end', function () {
+  runner.on(EVENT_RUN_END, function () {
     testResults.map(clean).forEach(async function (test) {
       await logResultsToIndex(test).catch(console.log);
     }, this);
@@ -79,7 +94,7 @@ async function mochalastic(runner, options) {
       project: reporterOptions.project,
       suite: reporterOptions.suite,
       time: currentDate,
-      err: errorJSON(test.err || {})
+      error: errorJSON(test.err || {}),
     };
   }
 
