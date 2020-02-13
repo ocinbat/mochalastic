@@ -1,31 +1,24 @@
 'use strict';
 
 var mocha = require('mocha');
-const {Client} = require('@elastic/elasticsearch');
+const {  Client } = require('@elastic/elasticsearch');
 var dateFormat = require('date-format');
- 
-const {
-  EVENT_RUN_BEGIN,
-  EVENT_TEST_PENDING,
-  EVENT_RUN_END,
-  EVENT_TEST_FAIL,
-  EVENT_TEST_PASS,
-  EVENT_SUITE_BEGIN,
-  EVENT_SUITE_END,
-  EVENT_TEST_END
-} = mocha.Runner.constants;
+var Date = global.Date;
+
+const EVENT_TEST_PASS = mocha.Runner.constants.EVENT_TEST_PASS;
+const EVENT_TEST_FAIL = mocha.Runner.constants.EVENT_TEST_FAIL;
+const EVENT_RUN_END = mocha.Runner.constants.EVENT_RUN_END;
+const EVENT_TEST_PENDING = mocha.Runner.constants.EVENT_TEST_PENDING;
+const EVENT_RUN_BEGIN = mocha.Runner.constants.EVENT_RUN_BEGIN;
+const EVENT_TEST_END = mocha.Runner.constants.EVENT_TEST_END;
 
 module.exports = mochalastic;
 
 async function mochalastic(runner, options) {
 
-  console.log(EVENT_TEST_END);
-  console.log(EVENT_RUN_BEGIN);
-
   mocha.reporters.Base.call(this, runner);
   var reporterOptions = options.reporterOptions;
-  var currentDate = (new Date()).toISOString();
-  
+
   validate(reporterOptions, 'nodeUris');
   validate(reporterOptions, 'username');
   validate(reporterOptions, 'password');
@@ -34,6 +27,10 @@ async function mochalastic(runner, options) {
   validate(reporterOptions, 'suite');
 
   var testResults = [];
+  var pendings = [];
+  var failures = [];
+  var passes = [];
+  var start = new Date();
 
   const client = new Client({
     node: reporterOptions.nodeUris,
@@ -41,24 +38,59 @@ async function mochalastic(runner, options) {
       username: reporterOptions.username,
       password: reporterOptions.password
     }
-  })
-  
+  }) 
 
   async function logResultsToIndex(testResult) {
     await client.index({
-      index: reporterOptions.indexPrefix + '-' +  dateFormat('yyyy.MM.dd', new Date()),
+      index: reporterOptions.indexPrefix + '-' + dateFormat('yyyy.MM.dd', new Date()),
       body: testResult
-    }).catch(console.log)
+    })
   };
+
+  runner.once(EVENT_RUN_BEGIN, function () {
+    start = new Date();
+  });
 
   runner.on(EVENT_TEST_END, function (test) {
     testResults.push(test);
   });
 
-  runner.on(EVENT_RUN_END, function () {
-    testResults.map(clean).forEach(async function (test) {
-      await logResultsToIndex(test).catch(console.log);
-    }, this);
+  runner.on(EVENT_TEST_PASS, function (test) {
+    passes.push(test);
+  });
+
+  runner.on(EVENT_TEST_FAIL, function (test) {
+    failures.push(test);
+  });
+
+  runner.on(EVENT_TEST_PENDING, function (test) {
+    pendings.push(test);
+  });
+
+
+  runner.on(EVENT_RUN_END, async function () {
+    var end = new Date();
+
+    var obj = {
+      project: reporterOptions.project,
+      suite: reporterOptions.suite,
+      total: testResults.length,
+      passes: passes.length,
+      pending: pendings.length,
+      failures: failures.length,
+      start: start.toISOString(),
+      end: end.toISOString(),
+      duration: end - start,
+      tests: testResults.map(clean),
+      timestamp: new Date().toISOString()
+    };
+    console.log(obj);
+    
+    await logResultsToIndex(obj).catch(console.log);
+
+    // testResults.map(clean).forEach(async function (test) {
+    //   await logResultsToIndex(test).catch(console.log);
+    // }, this);
   });
 
   /**
@@ -69,11 +101,38 @@ async function mochalastic(runner, options) {
    * @return {Object}
    */
   function errorJSON(err) {
+    if (!err) return null;
     var res = {};
     Object.getOwnPropertyNames(err).forEach(function (key) {
       res[key] = err[key];
     }, err);
     return res;
+  }
+
+  /**
+   * Return the status of the test. 
+   *
+   * @api private
+   * @param {Object} test
+   * @return {string} Passed, Failed, Pending
+   */
+  function mapStatus(test) {
+    var passed = passes.filter(p => p.title === test.title)[0];
+    if (passed) {
+      return "Passed";
+    }
+
+    var pending = pendings.filter(p => p.title === test.title)[0];
+    if (pending) {
+      return "Pending";
+    }
+
+    var failure = failures.filter(p => p.title === test.title)[0];
+    if (failure) {
+      return "Failed";
+    }
+
+    return 'Undefined';
   }
 
   /**
@@ -91,12 +150,32 @@ async function mochalastic(runner, options) {
       fullTitle: test.fullTitle(),
       duration: test.duration,
       currentRetry: test.currentRetry(),
-      project: reporterOptions.project,
-      suite: reporterOptions.suite,
-      time: currentDate,
-      error: errorJSON(test.err || {}),
+      error: errorJSON(test.err),
+      status: mapStatus(test)
     };
   }
+
+  // /**
+  //  * Return a plain-object representation of `test`
+  //  * free of cyclic properties etc.
+  //  *
+  //  * @api private
+  //  * @param {Object} test
+  //  * @return {Object}
+  //  */
+  // function clean2(test) {
+  //   return {
+  //     id: guid(),
+  //     title: test.title,
+  //     fullTitle: test.fullTitle(),
+  //     duration: test.duration,
+  //     currentRetry: test.currentRetry(),
+  //     project: reporterOptions.project,
+  //     suite: reporterOptions.suite,
+  //     time: currentDate,
+  //     err: errorJSON(test.err || {})
+  //   };
+  // }
 
   /**
    * Checks if (obj) is empty.
