@@ -1,16 +1,18 @@
 'use strict';
 
 var mocha = require('mocha');
-const {  Client } = require('@elastic/elasticsearch');
-var dateFormat = require('date-format');
+const elasticLogger =  require('./elastic-logger');
 var Date = global.Date;
 
-const EVENT_TEST_PASS = mocha.Runner.constants.EVENT_TEST_PASS;
-const EVENT_TEST_FAIL = mocha.Runner.constants.EVENT_TEST_FAIL;
-const EVENT_RUN_END = mocha.Runner.constants.EVENT_RUN_END;
-const EVENT_TEST_PENDING = mocha.Runner.constants.EVENT_TEST_PENDING;
-const EVENT_RUN_BEGIN = mocha.Runner.constants.EVENT_RUN_BEGIN;
-const EVENT_TEST_END = mocha.Runner.constants.EVENT_TEST_END;
+var constants = mocha.Runner.constants;
+
+const EVENT_TEST_BEGIN = constants.EVENT_TEST_BEGIN;
+const EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+const EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+const EVENT_RUN_END = constants.EVENT_RUN_END;
+const EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
+const EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+const EVENT_TEST_END = constants.EVENT_TEST_END;
 
 module.exports = mochalastic;
 
@@ -32,26 +34,22 @@ async function mochalastic(runner, options) {
   var passes = [];
   var start = new Date();
 
-  const client = new Client({
-    node: reporterOptions.nodeUris,
-    auth: {
-      username: reporterOptions.username,
-      password: reporterOptions.password
-    }
-  }) 
+  const elasticClient = new elasticLogger(reporterOptions.nodeUris, reporterOptions.username, reporterOptions.password);
 
   async function logResultsToIndex(testResult) {
-    await client.index({
-      index: reporterOptions.indexPrefix + '-' + dateFormat('yyyy.MM.dd', new Date()),
-      body: testResult
-    })
+    await elasticClient.log(reporterOptions.indexPrefix, testResult);
   };
 
   runner.once(EVENT_RUN_BEGIN, function () {
     start = new Date();
   });
 
+  runner.on(EVENT_TEST_BEGIN, function (test) {
+    test.start = new Date();
+  });
+
   runner.on(EVENT_TEST_END, function (test) {
+    test.end = new Date();
     testResults.push(test);
   });
 
@@ -67,30 +65,10 @@ async function mochalastic(runner, options) {
     pendings.push(test);
   });
 
-
   runner.on(EVENT_RUN_END, async function () {
-    var end = new Date();
-
-    var obj = {
-      project: reporterOptions.project,
-      suite: reporterOptions.suite,
-      total: testResults.length,
-      passes: passes.length,
-      pending: pendings.length,
-      failures: failures.length,
-      start: start.toISOString(),
-      end: end.toISOString(),
-      duration: end - start,
-      tests: testResults.map(clean),
-      timestamp: new Date().toISOString()
-    };
-    console.log(obj);
-    
-    await logResultsToIndex(obj).catch(console.log);
-
-    // testResults.map(clean).forEach(async function (test) {
-    //   await logResultsToIndex(test).catch(console.log);
-    // }, this);
+    testResults.map(clean).forEach(async function (test) {
+      await logResultsToIndex(test).catch(console.log);
+    }, this);
   });
 
   /**
@@ -146,37 +124,20 @@ async function mochalastic(runner, options) {
   function clean(test) {
     return {
       id: guid(),
+      project: reporterOptions.project,
+      suite: reporterOptions.suite,
       title: test.title,
       fullTitle: test.fullTitle(),
+      start: test.start.toISOString(),
+      end: test.end.toISOString(),
       duration: test.duration,
       currentRetry: test.currentRetry(),
       error: errorJSON(test.err),
-      status: mapStatus(test)
+      status: mapStatus(test),
+      runtime: start.toISOString()
     };
   }
-
-  // /**
-  //  * Return a plain-object representation of `test`
-  //  * free of cyclic properties etc.
-  //  *
-  //  * @api private
-  //  * @param {Object} test
-  //  * @return {Object}
-  //  */
-  // function clean2(test) {
-  //   return {
-  //     id: guid(),
-  //     title: test.title,
-  //     fullTitle: test.fullTitle(),
-  //     duration: test.duration,
-  //     currentRetry: test.currentRetry(),
-  //     project: reporterOptions.project,
-  //     suite: reporterOptions.suite,
-  //     time: currentDate,
-  //     err: errorJSON(test.err || {})
-  //   };
-  // }
-
+ 
   /**
    * Checks if (obj) is empty.
    *

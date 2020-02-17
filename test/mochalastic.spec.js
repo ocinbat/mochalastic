@@ -3,11 +3,11 @@
 var sinon = require('sinon');
 var Mocha = require('Mocha');
 var Mochalastic = require('./../lib/mochalastic.js');
-const {Client} = require('@elastic/elasticsearch');
 var Suite = Mocha.Suite;
 var Runner = Mocha.Runner;
 var Test = Mocha.Test;
 var expect = require("chai").expect;
+const ElasticLogger = require('./../lib/elastic-logger.js');
 
 describe('Mochalistic reporter', function () {
   var sandbox;
@@ -17,13 +17,17 @@ describe('Mochalistic reporter', function () {
   var noop = function () {};
 
   beforeEach(function () {
+
+    sandbox = sinon.createSandbox();
+    sandbox.stub(ElasticLogger.prototype, "log").callsFake(() => console.log("Document was indexed successfully"));
+
     var mocha = new Mocha({
       reporter: Mochalastic
     });
 
     suite = new Suite('Mochalastic Suite', 'root');
     runner = new Runner(suite);
-  
+
     var options = {
       reporterOptions: {
         nodeUris: 'https://localhost:9243',
@@ -35,8 +39,7 @@ describe('Mochalistic reporter', function () {
       }
     };
     var mochaReporter = new mocha._reporter(runner, options);
-    sandbox = sinon.createSandbox();
-   });
+  });
 
   afterEach(function () {
     sandbox.restore();
