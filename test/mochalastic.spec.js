@@ -1,50 +1,76 @@
 'use strict';
 
-var Chai = require('chai');
+var sinon = require('sinon');
+var Mocha = require('Mocha');
 var Mochalastic = require('./../lib/mochalastic.js');
-var Should = Chai.should();
+var Suite = Mocha.Suite;
+var Runner = Mocha.Runner;
+var Test = Mocha.Test;
+var expect = require("chai").expect;
+const ElasticLogger = require('./../lib/elastic-logger.js');
 
-describe('mochalastic reporter', function () {
-  var stdout;
+describe('Mochalistic reporter', function () {
+  var sandbox;
+  var suite;
   var runner;
+  var testTitle = 'json test 1';
+  var noop = function () {};
 
   beforeEach(function () {
-    stdout = [];
-    runner = {};
+
+    sandbox = sinon.createSandbox();
+    sandbox.stub(ElasticLogger.prototype, "log").callsFake(() => console.log("Document was indexed successfully"));
+
+    var mocha = new Mocha({
+      reporter: Mochalastic
+    });
+
+    suite = new Suite('Mochalastic Suite', 'root');
+    runner = new Runner(suite);
+
+    var options = {
+      reporterOptions: {
+        nodeUris: 'https://localhost:9243',
+        username: 'username',
+        password: 'password',
+        project: 'SampleTest',
+        suite: 'some test suite key',
+        indexPrefix: 'test-results'
+      }
+    };
+    var mochaReporter = new mocha._reporter(runner, options);
   });
 
-  describe('on test end', function () {
-    it('should nothing happen', function () {
-      var expectedTitle = 'some title';
-      var test = {
-        fullTitle: function () {
-          return expectedTitle;
-        },
-        slow: function () {},
-        currentRetry: function () {}
-      };
-      
-      runner.on = function (event, callback) {
-        if (event === 'test end') {
-          callback(test);
-        }
-        if (event === 'end') {
-          callback();
-        }
-      };
+  afterEach(function () {
+    sandbox.restore();
+  });
 
-      var options = {
-        reporterOptions: {
-          nodeUris: 'https://lcoalhost:9243',
-          username: 'username',
-          password: 'password',
-          project: 'SampleTest',
-          suite: 'some test suite key',
-          indexPrefix: 'test-results'
-        }
-      };
+  it('should have 1 test failure', function (done) {
+    var error = {
+      message: 'oh error'
+    };
 
-      Mochalastic.call({}, runner, options);
+    suite.addTest(
+      new Test(testTitle, function (done) {
+        done(new Error(error.message));
+      })
+    );
+
+    runner.run(function (failureCount) {
+      sandbox.restore();
+      expect(runner, 'to satisfy', {
+        testResults: {
+          failures: [{
+            title: testTitle,
+            err: {
+              message: error.message
+            }
+          }]
+        }
+      });
+      expect(failureCount, 'to be', 1);
+      done();
     });
   });
+
 });

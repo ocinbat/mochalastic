@@ -8,7 +8,7 @@ Pushes test results into an elasticsearch instance.
 ## Installation
 
 ```shell
-$ npm install mochalastic --save-dev
+$ npm install mochalastic --save
 ```
 
 ## Usage
@@ -41,9 +41,7 @@ All tests will be published. There is a feature request for skipping 'Pending' o
 
 ## Options
 
-**host**: *string* domain name of your elasticsearch instance (e.g. for a hosted instance somesub.somehost.com)
-
-**port**: *string* port number to use when connections to elasticsearch
+**nodeUris**: *string* the address of your elasticsearch instance (e.g. for a hosted instance https://localhost:9200m)
 
 **username**: *string* elasticsearch username
 
@@ -51,7 +49,9 @@ All tests will be published. There is a feature request for skipping 'Pending' o
 
 **project**: *string* projet name with which the tests are associated
 
-**suiteId**: *string* suite name with which the tests are associated
+**suite**: *string* suite name with which the tests are associated
+
+**indexPrefix**: *string* index prefix will be used to create index. After the prefix, the system adds the current date format as yyyy.MM.dd. (e.g. for test-results prefix test-results-2020-02-17)
 
 ## Contributing
 
